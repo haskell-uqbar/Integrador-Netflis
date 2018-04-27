@@ -5,7 +5,7 @@ data Serie = UnaSerie {
     cantTemporadas :: Int,
     calificaciones :: [Int],
     esOriginalDeNetflis :: Bool
-} deriving (Eq, Show)
+} deriving (Eq, Show, Ord)
   
 tioGolpetazo = UnaSerie {
     nombre = "One punch man",
@@ -66,7 +66,6 @@ maraton1 = [tioGolpetazo,cosasExtranias,dbs,espejoNegro,rompiendoMalo,treceRazon
 maraton2 = [tioGolpetazo]
 listaMaraton = [maraton1,maraton1]
 listaMaraton2 = [maraton1,maraton2]
-tamanioMaraton = length
 --OrdenSuperior
 ----1
 --A)
@@ -87,38 +86,43 @@ laMejorCalificacion maraton = maximoSegun calificacionesSerie maraton
 --B)
 laSerieMasLarga maraton = maximoSegun duracionTotalSerie maraton
 --C)
-laMejorMaraton maratones = maximoSegun laMejorCalificacion maraton
+laMejorMaraton maratones = maximoSegun laMejorCalificacion maratones
 --3)
 --A) 
 
+type Calificaciones = [Int]
 data Critico = UnCritico {
     criterio :: (Serie -> Bool),
-    calificacion :: (Calificaciones-> Calificaciones),
-} deriving (Show)
+    comoCalifica :: (Calificaciones-> Calificaciones)
+}
 
-serieFloja serie = cantTemporadas serie == 1
 
 --A
-dMoleitor = UnCritico {criterio=serieFloja, calificar=reducirCalificaciones}
+serieFloja serie = cantTemporadas serie == 1
+dMoleitor = UnCritico {criterio=serieFloja, comoCalifica=reducirCalificaciones}
 reducirCalificaciones:: [Int] -> [Int]
-reducirCalificaciones = (++[1]).filter (<=3)
-reducirCalificaciones2 lista = (filter (<=3) lista) ++ [1]
+reducirCalificaciones = (++[1]).filter (>=3)
+reducirCalificaciones2 lista = (filter (>=3) lista) ++ [1]
 
 --B
-hypeador = UnCritico {criterio=hypeable, calificar=hypear}
+hypeador = UnCritico {criterio=hypeable, comoCalifica=hypear}
 
-hypeable = elem 1
+hypeable serie = notElem 1 (calificaciones serie)
 premiar numero = min 5 (numero + 2)
-sinHeadNiTail = (drop 1).init
+sinHeadNiTail = tail.init
 hypear calificaciones = [(premiar.head) calificaciones] ++ sinHeadNiTail calificaciones ++ [(premiar.last) calificaciones] 
 --C
-exquisito = UnCritico {criterio=valeLaPena, calificar=calificarExquisito}
+exquisito = UnCritico {criterio=valeLaPena, comoCalifica=calificarExquisito}
 valeLaPena unaSerie = ((cantTemporadas unaSerie)>1) && (((length.calificaciones) unaSerie)>=3)
 --D
-cualquierColectivoLoDejaBien = UnCritico {criterio=(\_ -> True), calificacion=(++[5])} 
+cualquierColectivoLoDejaBien = UnCritico
+     {criterio=(\_ -> True), 
+     comoCalifica=(++[5])} 
 
-criticar (unCritico criterio calificar) unaSerie | criterio unaSerie = calificar unaSerie
-                                                | otherwise = unaSerie 
-calificar unCritico maraton = map (criticar unCritico) series 
+criticar (UnCritico criterio calificar) unaSerie 
+    | criterio unaSerie = 
+        (calificar.calificaciones) unaSerie
+    | otherwise = calificaciones unaSerie 
+calificar unCritico maraton = map (criticar unCritico) maraton 
 calificarExquisito calificaciones = [avg calificaciones + 1]
 
