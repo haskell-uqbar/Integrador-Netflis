@@ -70,39 +70,55 @@ tamanioMaraton = length
 --OrdenSuperior
 ----1
 --A)
-promedioDuracionMaraton maraton = div (sum (duracionTotalSeriesMaraton maraton)) (tamanioMaraton maraton)
-duracionTotalSerie serie = (*) (cantTemporadas serie) (duracion serie)
-duracionTotalSeriesMaraton = map duracionTotalSerie 
---B)
-promedioCalificacionMaraton maraton = div (sum (listaDeCalificacionesPromedio maraton)) (length (listaDeCalificacionesPromedio maraton))
-promediocalficacionSerie serie  | (length.calificaciones) serie == 0 = 0  
-								| otherwise = div ((sum.calificaciones) serie) ((length.calificaciones) serie)
-listaDeCalificacionesPromedio = map promediocalficacionSerie 
---C)
-promedioCalificacionesListaMaratones maratones =  div ((sum.listaCalificacionesMaratones) maratones) (length maratones)
-listaCalificacionesMaratones = map promedioCalificacionMaraton
+promedioSegun funcion lista = div ((sum.map funcion) lista) (length lista)
+promedioDuracionMaraton = promedioSegun duracionTotalSerie
+promedioCalificacionesMaraton = promedioSegun calificacionesSerie
+
+avg lista = promedioSegun id lista
+calificacionesSerie = avg.calificaciones
+duracionTotalSerie serie = cantTemporadas serie * duracion serie
+
+promedioCalificacionesMaratones listaMaratones = promedioSegun promedioCalificacionesMaraton listaMaratones
+promedioCalificacionesMaratonesPF = promedioSegun promedioCalificacionesMaraton
 ----2
 --A)
-laMejorCalificacion maraton = filter (\unaSerie->((maximum.listaDeCalificacionesPromedio) maraton) == promediocalficacionSerie unaSerie) maraton
+maximoSegun funcion lista = (head.filter (\elemento->((maximum.map funcion) lista) == funcion elemento)) lista
+laMejorCalificacion maraton = maximoSegun calificacionesSerie maraton
 --B)
-laSerieMasLarga maraton = filter (\unaSerie->((maximum.duracionTotalSeriesMaraton) maraton) == duracionTotalSerie unaSerie) maraton
+laSerieMasLarga maraton = maximoSegun duracionTotalSerie maraton
 --C)
-calificacionDeLaMaratonDeMaratones maratonDeMaratones= filter (\unaMaraton->((maximum.listaCalificacionesMaratones) maratonDeMaratones) == (promedioCalificacionMaraton unaMaraton)) maratonDeMaratones 
+laMejorMaraton maratones = maximoSegun laMejorCalificacion maraton
 --3)
 --A) 
-dMoleitor unaSerie = UnaSerie{nombre = nombre unaSerie, genero =genero unaSerie,duracion = duracion unaSerie,cantTemporadas = cantTemporadas unaSerie,calificaciones =(reducirCalificaciones.calificaciones) unaSerie,esOriginalDeNetflis = esOriginalDeNetflis unaSerie}
+
+data Critico = UnCritico {
+    criterio :: (Serie -> Bool),
+    calificacion :: (Calificaciones-> Calificaciones),
+} deriving (Show)
+
+serieFloja serie = cantTemporadas serie == 1
+
+--A
+dMoleitor = UnCritico {criterio=serieFloja, calificar=reducirCalificaciones}
 reducirCalificaciones:: [Int] -> [Int]
 reducirCalificaciones = (++[1]).filter (<=3)
---B)
-hypear unaSerie | elem 1 (calificaciones unaSerie) = unaSerie
-				|otherwise = UnaSerie{nombre = nombre unaSerie, genero=genero unaSerie,duracion= duracion unaSerie,cantTemporadas = cantTemporadas unaSerie, calificaciones = (sumarCalificacion.calificaciones) unaSerie, esOriginalDeNetflis = esOriginalDeNetflis unaSerie} 
---sumarCalificacion:: [Int]->[Int]
+reducirCalificaciones2 lista = (filter (<=3) lista) ++ [1]
 
-sumarCalificacion listaCalificacion = [(min (((+2).head) listaCalificacion) 5)]++(((take 1).tail) listaCalificacion)++[(min (((+2).last) listaCalificacion) 5)]  
-hypeador = hypear 
---C)
+--B
+hypeador = UnCritico {criterio=hypeable, calificar=hypear}
+
+hypeable = elem 1
+premiar numero = min 5 (numero + 2)
+sinHeadNiTail = (drop 1).init
+hypear calificaciones = [(premiar.head) calificaciones] ++ sinHeadNiTail calificaciones ++ [(premiar.last) calificaciones] 
+--C
+exquisito = UnCritico {criterio=valeLaPena, calificar=calificarExquisito}
 valeLaPena unaSerie = ((cantTemporadas unaSerie)>1) && (((length.calificaciones) unaSerie)>=3)
-exquisito unaSerie  | valeLaPena unaSerie = UnaSerie{nombre = nombre unaSerie, genero=genero unaSerie,duracion= duracion unaSerie,cantTemporadas = cantTemporadas unaSerie, calificaciones = [((+1).promediocalficacionSerie) unaSerie], esOriginalDeNetflis = esOriginalDeNetflis unaSerie} 
-					| otherwise = unaSerie
----D)
-cualquierColectivoLoDejaBien unaSerie = UnaSerie{nombre = nombre unaSerie, genero=genero unaSerie,duracion= duracion unaSerie,cantTemporadas = cantTemporadas unaSerie, calificaciones = ((++[5]).calificaciones) unaSerie, esOriginalDeNetflis = esOriginalDeNetflis unaSerie} 
+--D
+cualquierColectivoLoDejaBien = UnCritico {criterio=(\_ -> True), calificacion=(++[5])} 
+
+criticar (unCritico criterio calificar) unaSerie | criterio unaSerie = calificar unaSerie
+                                                | otherwise = unaSerie 
+calificar unCritico maraton = map (criticar unCritico) series 
+calificarExquisito calificaciones = [avg calificaciones + 1]
+
