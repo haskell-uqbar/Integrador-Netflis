@@ -2,6 +2,8 @@
  
 ### *Sacando series y películas buenas del catálogo desde 1997.*
 
+![](netflix.jpg)
+
 A lo largo de los años, los streamings multimedia se han hecho más y más famosos, llegando incluso a superar la misma televisión. Netflis pretende ser la empresa más importante de este rubro, gracias a su gran catálogo. En esta ocasión nos han pedido que modelemos las series que ofrecerán en su catálogo, para así darle una buena experiencia al usuario. Sabemos que una serie se compone de un nombre, un género, una duración total en horas, una cantidad de temporadas, una calificación (en una escala de 5 estrellas) y si es original de Netflis.
 
 Tenemos las siguientes definiciones sobre las cuales partir:
