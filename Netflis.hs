@@ -81,7 +81,11 @@ promedioCalificacionesMaratones listaMaratones = promedioSegun promedioCalificac
 promedioCalificacionesMaratonesPF = promedioSegun promedioCalificacionesMaraton
 ----2
 --A)
-maximoSegun funcion lista = (head.filter (\elemento->((maximum.map funcion) lista) == funcion elemento)) lista
+maximoSegun funcion lista = foldl1 (maxSegun funcion) lista
+maxSegun funcion x y 
+ |funcion x > funcion y = x
+ |otherwise = y
+
 laMejorCalificacion maraton = maximoSegun calificacionesSerie maraton
 --B)
 laSerieMasLarga maraton = maximoSegun duracionTotalSerie maraton
@@ -98,31 +102,43 @@ data Critico = UnCritico {
 
 
 --A
+dMoleitor = UnCritico {
+ criterio = serieFloja, 
+ comoCalifica = reducirCalificaciones
+ }
+
 serieFloja serie = cantTemporadas serie == 1
-dMoleitor = UnCritico {criterio=serieFloja, comoCalifica=reducirCalificaciones}
 reducirCalificaciones:: [Int] -> [Int]
-reducirCalificaciones = (++[1]).filter (>=3)
-reducirCalificaciones2 lista = (filter (>=3) lista) ++ [1]
+reducirCalificaciones lista = (filter (>=3) lista) ++ [1]
+--reducirCalificaciones = (++[1]).filter (>=3)
 
 --B
-hypeador = UnCritico {criterio=hypeable, comoCalifica=hypear}
+hypeador = UnCritico {
+ criterio = hypeable, 
+ comoCalifica = hypear
+ }
 
 hypeable serie = notElem 1 (calificaciones serie)
 premiar numero = min 5 (numero + 2)
 sinHeadNiTail = tail.init
 hypear calificaciones = [(premiar.head) calificaciones] ++ sinHeadNiTail calificaciones ++ [(premiar.last) calificaciones] 
 --C
-exquisito = UnCritico {criterio=valeLaPena, comoCalifica=calificarExquisito}
-valeLaPena unaSerie = ((cantTemporadas unaSerie)>1) && (((length.calificaciones) unaSerie)>=3)
---D
-cualquierColectivoLoDejaBien = UnCritico
-     {criterio=(\_ -> True), 
-     comoCalifica=(++[5])} 
-
-criticar (UnCritico criterio calificar) unaSerie 
-    | criterio unaSerie = 
-        (calificar.calificaciones) unaSerie
-    | otherwise = calificaciones unaSerie 
-calificar unCritico maraton = map (criticar unCritico) maraton 
+exquisito = UnCritico {
+ criterio = valeLaPena, 
+ comoCalifica = calificarExquisito
+ }
+valeLaPena unaSerie = cantTemporadas unaSerie >1 && length (calificaciones unaSerie) >= 3
 calificarExquisito calificaciones = [avg calificaciones + 1]
+
+--D
+cualquierColectivoLoDejaBien = UnCritico {
+    criterio = (\_ -> True), 
+    comoCalifica = (++[5])
+    } 
+
+criticar critico unaSerie 
+    | (criterio critico) unaSerie = unaSerie{calificaciones = (comoCalifica critico) (calificaciones unaSerie)}
+    | otherwise = unaSerie 
+
+--calificarMaraton unCritico maraton = map (criticar unCritico) maraton 
 
